@@ -42,44 +42,23 @@ class UserController extends Controller
     public $token = true;
     public function register(Request $request)
     {
-        $validator = Validator::make(
+        $validator = \Validator::make(
             $request->all(),
             [
-                'name' => 'string|required|max:30',
                 'email' => 'string|required',
-                'phone' => 'required|max:15',
-                'cccd' => 'required|max:15',
-                'password' => 'required',
-                'status' => 'in:active,inactive',
+                'password' => 'required'
             ]
         );
         if ($validator->fails()) {
             return response()->json(['error' => $validator->errors()], 401);
         }
         $data = $request->all();
-        $data['password'] = Hash::make($request->password);
+        $data['password'] = \Hash::make($request->password);
         $status = User::create($data);
         return response()->json([
             'success' => true,
             'data' => $status
         ], Response::HTTP_OK);
-        // try {
-        //     $data = $request->all();
-        //     $data['password'] = Hash::make($request->password);
-        //     $user = User::create($data);
-        //     if ($this->token) {
-        //         return $this->login($request);
-        //     }
-        //     return response()->json([
-        //         'success' => true,
-        //         'data' => $user
-        //     ], Response::HTTP_OK);
-        // } catch (\Throwable $th) {
-        //     return response()->json([
-        //         'success' => false,
-        //         'message' => 'Somethings went wrong! please try agian.'
-        //     ], Response::HTTP_INTERNAL_SERVER_ERROR);
-        // }
     }
     public function login(Request $request)
     {
