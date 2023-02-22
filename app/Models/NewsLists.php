@@ -13,6 +13,6 @@ class NewsLists extends Model
 
 
     protected $fillable = [
-        'title', 'link', 'image', 'short_description', 'description'
+        'link', 'title', 'image', 'short_description', 'description', 'date'
     ];
 }

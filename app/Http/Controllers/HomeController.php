@@ -8,95 +8,47 @@ use Symfony\Component\DomCrawler\Crawler;
 
 class HomeController extends Controller
 {
-    //
-    public function getResult()
+    public function crawlData()
     {
-        $url = 'https://vnexpress.net/';
+        $url = 'https://vnexpress.net/thoi-su/chinh-tri';
         $client = new Client();
         $crawler = $client->request('GET', $url);
-        $text = $crawler->each(
+
+        $link = $crawler->filter('.description > a')->each(
             function (Crawler $node) {
-                // $node->text();
-                $crawl_link  = $node->filter('.title-news > a')->attr('href');
-                $link = NewsLists::where('link', $crawl_link)->first();
-                dd($crawl_link);
-                // if ($link == null) {
-                $title  = $node->filter('.title-news')->text();
-                $image  = $node->filter('.thumb-art > a > picture > img')->attr('src');
-                $short_description  = $node->filter('.description')->text();
-                // NewsLists::create(['title' => $title, 'link' => $crawl_link, 'image' => $image, 'short_description' => $short_description]);
-                // }
+                return $node->attr('href');
             }
         );
-        dd($text);
-        
-        // $crawler = $client->request('GET', 'https://xoso.mobi/mien-nam/xsag-9-2-2023-ket-qua-xo-so-an-giang-ngay-9-2-2023-p2.html');
-
-        // $crawler->each(
-        //     function (Crawler $node) {
-        //         $giaidb = $node->filter('.v-gdb')->text();
-        //         $giai1  = $node->filter('.v-g1')->text();
-        //         $giai2  = $node->filter('.v-g2')->text();
-        //         $giai30 = $node->filter('.v-g3-0')->text();
-        //         $giai31 = $node->filter('.v-g3-1')->text();
-        //         $giai40 = $node->filter('.v-g4-0')->text();
-        //         $giai41 = $node->filter('.v-g4-1')->text();
-        //         $giai42 = $node->filter('.v-g4-2')->text();
-        //         $giai43 = $node->filter('.v-g4-3')->text();
-        //         $giai44 = $node->filter('.v-g4-4')->text();
-        //         $giai45 = $node->filter('.v-g4-5')->text();
-        //         $giai46 = $node->filter('.v-g4-6')->text();
-        //         $giai5  = $node->filter('.v-g5')->text();
-        //         $giai60 = $node->filter('.v-g6-0')->text();
-        //         $giai61 = $node->filter('.v-g6-1')->text();
-        //         $giai62 = $node->filter('.v-g6-2')->text();
-        //         $giai7  = $node->filter('.v-g7')->text();
-        //         $giai8  = $node->filter('.v-g8')->text();
-
-        //         $data = $node->filter('h2.tit-mien')->text();
-
-        //         $list = [
-        //             'Tiền Giang',
-        //             'Vĩnh Long',
-        //             'Đồng Tháp',
-        //             'Cà Mau',
-        //             'Kiên Giang',
-        //             'TP Hồ Chí Minh',
-        //             'Bến Tre',
-        //             'Vũng Tàu',
-        //             'Bạc Liêu',
-        //             'Đồng Nai',
-        //             'Cần Thơ',
-        //             'Sóc Trăng',
-        //             'Tây Ninh',
-        //             'An Giang',
-        //             'Bình Thuận',
-        //             'Bình Dương',
-        //             'Trà Vinh',
-        //             'Long An',
-        //             'Bình Phước',
-        //             'Hậu Giang',
-        //             'Đà Lạt'
-        //         ];
-
-        //         foreach ($list as $key => $value) {
-        //             // print($value);
-        //             if (str_contains($data, $value)) {
-        //                 $provinces = $value;
-        //             }
-        //         }
-
-        //         $list_data = explode(" ", $data);
-
-        //         if ($provinces == 'TP Hồ Chí Minh') {
-        //             $date = $list_data[10];
-        //             print($date);
-        //         } else {
-        //             $date = $list_data[8];
-        //         }
-        //     }
-        // );
+        for ($i = 0; $i < count($link); $i++) {
+            $valid = NewsLists::where('link', $link[$i])->first();
+            if ($valid == null) {
+                $link_crawler = $client->request('GET', $link[$i]);
+                $link_crawler->each(
+                    function (Crawler $node) {
+                        $link = $node->filter('.social_twit')->attr('data-url');
+                        $title =  $node->filter('.title-detail')->text();
+                        try {
+                            $image =  $node->filter('.fig-picture > picture > img')->attr('data-src');
+                        } catch (\Throwable $th) {
+                            $image = 'https://s1.vnecdn.net/vnexpress/restruct/i/v738/v2_2019/pc/graphics/no-thumb-5x3.jpg';
+                        }
+                        $short_description =  $node->filter('.description')->text();
+                        // $description =  $node->filter('.fck_detail ')->html();
+                        $description =  $node->filter('.fck_detail ')->text();
+                        // dd($description);
+                        $date =  $node->filter('.date')->text();
+                        NewsLists::create(["link" => $link, "title" => $title, "image" => $image, "short_description" => $short_description, "description" => $description, "date" => $date]);
+                    }
+                );
+            }
+        }
         $result = NewsLists::get();
+        return response()->json($result);
+    }
+
+    public function getResult()
+    {
+        $result = NewsLists::paginate(5);
         return response()->json($result);
     }
 }

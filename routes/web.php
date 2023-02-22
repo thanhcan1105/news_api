@@ -17,10 +17,11 @@ use Illuminate\Support\Facades\Route;
 //     return view('welcome');
 // });
 
-Route::get('/','AdminController@index');
+Route::get('/', 'AdminController@index');
 Route::get('logout', '\App\Http\Controllers\Auth\LoginController@logout')->name('logout');
 //user
 
 
 // Backend section start
-Route::get('news', [HomeController::class, 'getResult']);
+Route::get('getResults', [HomeController::class, 'getResult']);
+Route::get('crawlData', [HomeController::class, 'crawlData']);
